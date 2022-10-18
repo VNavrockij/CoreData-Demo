@@ -6,16 +6,18 @@
 //
 
 import UIKit
+import CoreData
 
 class TableViewController: UITableViewController {
     
-    var toDoItems: [String] = []
+    var toDoItems: [Task] = []
 
     @IBAction func addTask(_ sender: UIBarButtonItem) {
         let ac = UIAlertController(title: "Add Task", message: "add new task", preferredStyle: .alert)
         let ok = UIAlertAction(title: "Ok", style: .default) { action in
             let textField = ac.textFields?[0]
-            self.toDoItems.insert((textField?.text)!, at: 0)
+            self.saveTask(taskToDo: (textField?.text ?? "empty string") )
+//            self.toDoItems.insert((textField?.text)!, at: 0)
             self.tableView.reloadData()
         }
         let cancel = UIAlertAction(title: "Cancel", style: .default, handler: nil)
@@ -26,6 +28,24 @@ class TableViewController: UITableViewController {
         ac.addAction(ok)
         ac.addAction(cancel)
         present(ac, animated: true)
+    }
+    
+    func saveTask(taskToDo: String) {
+        
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        let entity = NSEntityDescription.entity(forEntityName: "Task", in: context)
+        
+        let taskObject = NSManagedObject(entity: entity!, insertInto: context) as! Task
+        
+        taskObject.taskToDo = taskToDo
+        
+        do {
+            try context.save()
+            toDoItems.append(taskObject)
+        } catch {
+            print(error)
+        }
     }
     
     override func viewDidLoad() {
@@ -53,8 +73,8 @@ class TableViewController: UITableViewController {
   
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-
-        cell.textLabel?.text = toDoItems[indexPath.row]
+        let task = toDoItems[indexPath.row]
+        cell.textLabel?.text = task.taskToDo
 
         return cell
     }
